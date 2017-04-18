@@ -1,2 +1,2 @@
 # formscan
-Convert digitized form documents to apps
+Convert digitized form documents into apps
