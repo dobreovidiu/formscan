@@ -13,12 +13,12 @@ App creation: Fat Finger
 <br>
 <p>2. Dashboard</p>
 <br>
-<p align="center"><img src="http://webbyteam.com/formscan/screenshots/upload3.png" width="80%" align="center"></p>
+<p align="center"><img src="http://webbyteam.com/formscan/screenshots/upload4.png" width="80%" align="center"></p>
 
 <br>
 <p>3. Upload Document</p>
 <br>
-<p align="center"><img src="http://webbyteam.com/formscan/screenshots/upload2.png" width="80%" align="center"></p>
+<p align="center"><img src="http://webbyteam.com/formscan/screenshots/upload3.png" width="80%" align="center"></p>
 
 <br>
 <p>4. Process Document</p>
