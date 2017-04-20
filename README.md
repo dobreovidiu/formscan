@@ -13,7 +13,7 @@ App creation: Fat Finger
 <br>
 <p>2. Dashboard</p>
 <br>
-<p align="center"><img src="http://webbyteam.com/formscan/screenshots/upload.png" width="80%" align="center"></p>
+<p align="center"><img src="http://webbyteam.com/formscan/screenshots/upload3.png" width="80%" align="center"></p>
 
 <br>
 <p>3. Upload Document</p>
@@ -23,7 +23,7 @@ App creation: Fat Finger
 <br>
 <p>4. Process Document</p>
 <br>
-<p align="center"><img src="http://webbyteam.com/formscan/screenshots/process.png" width="80%" align="center"></p>
+<p align="center"><img src="http://webbyteam.com/formscan/screenshots/process2.png" width="80%" align="center"></p>
 
 <br>
 <p>5. Fat Finger: App Created</p>
