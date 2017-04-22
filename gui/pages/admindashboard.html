@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title><!--WEBSITE TITLE--> | Dashboard</title>		
+
+	<!-- Global stylesheets -->
+	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
+	<link href="assets/css/icons/icomoon/styles.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/bootstrap.min.css?v=<!--JSVER-->" rel="stylesheet" type="text/css">
+	<link href="assets/css/core.min.css?v=<!--JSVER-->" rel="stylesheet" type="text/css">
+	<link href="assets/css/components.min.css?v=<!--JSVER-->" rel="stylesheet" type="text/css">
+	<link href="assets/css/colors.min.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/styles.css?v=<!--JSVER-->" rel="stylesheet" type="text/css">			
+	<!-- /global stylesheets -->
+
+	<!-- Core JS files -->
+	<script type="text/javascript" src="assets/js/plugins/loaders/pace.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/libraries/jquery.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/libraries/bootstrap.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/loaders/blockui.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/ui/nicescroll.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/ui/drilldown.js"></script>
+	<!-- /core JS files -->
+
+	<!-- Theme JS files -->
+	<script type="text/javascript" src="assets/js/plugins/uploaders/dropzone.min.js?v=<!--JSVER-->"></script>	
+	<script type="text/javascript" src="assets/js/core/libraries/jquery_ui/datepicker.min.js?v=<!--JSVER-->"></script>		
+	<script type="text/javascript" src="assets/js/plugins/tables/datatables/datatables.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/libraries/jquery_ui/interactions.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/selects/select2.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/buttons/spin.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/buttons/ladda.min.js"></script>		
+	<script type="text/javascript" src="assets/js/core/app.js?v=<!--JSVER-->"></script>
+	<script type="text/javascript" src="assets/js/pages/uploader_dropzone_documents.js?v=<!--JSVER-->"></script>		
+	<script type="text/javascript" src="assets/js/pages/form_select2.js"></script>
+	<!-- /theme JS files -->
+	
+	<!-- Application JS files -->
+	<script type="text/javascript" src="assets/api/js/api/api-documents.js?v=<!--JSVER-->"></script>		
+	<script type="text/javascript" src="assets/api/js/api/api-service.js?v=<!--JSVER-->"></script>	
+	<!-- /application JS files -->	
+	
+</head>
+
+<body>
+
+	<!-- Main navbar -->
+	<div class="navbar navbar-inverse">
+		<div class="navbar-header">
+			<a class="navbar-brand" href="index.php" style="font-size: 16px"><!--COMPANY TITLE--></a>
+			
+			<ul class="nav navbar-nav pull-right visible-xs-block">
+				<li><a data-toggle="collapse" data-target="#navbar-mobile"><i class="icon-tree5"></i></a></li>
+			</ul>
+		</div>
+
+		<div class="navbar-collapse collapse" id="navbar-mobile" style="float: right">
+			
+			<ul class="nav navbar-nav navbar-right">
+				<li class="dropdown dropdown-user">
+					<a class="dropdown-toggle" data-toggle="dropdown">
+						<span><!--CURUSERNAME--></span>
+						<i class="caret"></i>
+					</a>
+
+					<ul class="dropdown-menu dropdown-menu-right">
+						<li><a style="cursor:pointer" onclick="onLockScreen()"><i class="icon-key"></i> Lock Screen</a></li>										
+						<li><a style="cursor:pointer" onclick="onLogout()"><i class="icon-switch2"></i> Logout</a></li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+	</div>
+	<!-- /main navbar -->
+
+
+	<!-- Second navbar -->
+	<div class="navbar navbar-default" id="navbar-second">
+		<ul class="nav navbar-nav no-border visible-xs-block">
+			<li><a class="text-center collapsed" data-toggle="collapse" data-target="#navbar-second-toggle"><i class="icon-menu7"></i></a></li>
+		</ul>
+
+		<div class="navbar-collapse collapse" id="navbar-second-toggle">
+			<ul class="nav navbar-nav">
+				<!--MAIN MENU-->		
+			</ul>
+		</div>
+	</div>
+	<!-- /second navbar -->
+
+
+	<!-- Page container -->
+	<div class="page-container">
+
+		<!-- Page content -->
+		<div class="page-content">
+
+			<!-- Main content -->
+			<div class="content-wrapper">
+
+				<div class="panel panel-flat">
+
+					<div class="panel-body">
+											
+					
+						<div class="row" style="height: 500px">
+						
+							<div class="col-lg-6">		
+								<div class="panel panel-flat" style="height: 500px" id="uploadPanel">		
+									<div class="panel-heading">								
+										<h6 class="panel-title">Paper Form</h6>
+									</div>
+
+									<div class="panel-body">
+										<div class="row">
+											<div class="col-md-12">	
+												<p><b>Upload file:</b> click below to select file<br>Formats accepted: PDF, Word (DOC, DOCX), Excel (XLS, XLSX), Image (PNG, JPG/JPEG, GIF)</p>
+												<form action="documentuploadservice.php" class="dropzone" id="dropzone_single">
+													<div class="fallback">
+														<input name="file" type="file" multiple />
+													</div>
+												</form>		
+												<br>
+												<button type="button" class="btn btn-primary" onclick="onRunCheckAsync()" id="processBut">Process Document</button>
+												<br><br>
+												<p>Test files</p>
+												<a href="">PDF1</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="">PDF2</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="">PDF3</a>
+												&nbsp;&nbsp;&nbsp;&nbsp;<a href="">Word1</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="">Word2</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="">Word3</a>
+												&nbsp;&nbsp;&nbsp;&nbsp;<a href="">Excel1</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="">Excel2</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="">Excel3</a>
+												<br><a href="">Image1</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="">Image2</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="">Image3</a>												
+											</div>										
+										</div>
+										
+									</div>
+								</div>								
+							</div>
+							
+							
+							<div class="col-lg-6">		
+								<div class="panel panel-flat" style="height: 500px" id="automationPanel">		
+									<div class="panel-heading">
+										<h6 class="panel-title">Automation Logs</h6>
+									</div>
+								
+									<div class="panel-body">
+									
+										<div class="row">
+											<div class="col-md-12" style="height: 400px; overflow-y: auto" id="automationLogs">
+												Form automation not running.
+											</div>									
+										</div>
+										
+									</div>
+								</div>
+							</div>		
+							
+						</div>
+							
+					</div>
+						
+				</div>
+
+			</div>
+			<!-- /main content -->
+
+		</div>
+		<!-- /page content -->
+
+
+		<!-- Footer -->
+		<div class="footer text-muted">
+			&copy; <!--CURYEAR-->. <a href="<!--COMPANY URL-->" target="_blank"><!--COMPANY TITLE--></a></a>
+		</div>
+		<!-- /footer -->
+
+	</div>
+	<!-- /page container -->
+	
+	
+	<!-- CONFIRM DIALOG -->
+	<div id="confirmDlg" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog">	
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<h4 class="modal-title" id="confirmDlgTitle">Confirmation</h4>
+				</div>
+				<div class="modal-body">
+					<div class="row">
+						<div class="col-md-12">
+							<p id="confirmDlgMsg">
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner" data-style="zoom-out" onclick="onConfirmedSticky()"><span class="ladda-label">&nbsp;OK&nbsp;</span></button>
+					<button type="button" data-dismiss="modal" class="btn btn-default">&nbsp;Cancel&nbsp;</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	
+	<!-- STATUS DIALOG -->
+	<div id="statusDlg" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog">	
+			<div class="modal-content">		
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<h4 class="modal-title" id="statusDlgTitle"></h4>
+				</div>
+				<div class="modal-body">					
+					<div class="row">
+						<div class="col-md-12">
+							<p id="statusDlgMsg">
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" data-dismiss="modal" class="btn btn-primary">&nbsp;OK&nbsp;</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	
+	<!-- STATUS2 DIALOG -->
+	<div id="statusDlg2" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog">	
+			<div class="modal-content">		
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<h4 class="modal-title" id="statusDlgTitle2"></h4>
+				</div>
+				<div class="modal-body">					
+					<div class="row">
+						<div class="col-md-12">
+							<p id="statusDlgMsg2">
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary" onclick="document.location='index.php'">&nbsp;OK&nbsp;</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+</body>
+</html>
