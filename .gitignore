@@ -1,0 +1,11 @@
+api/lib/Common/*
+api/lib/PhpExcel/*
+api/lib/PhpWord/*
+api/lib/XPdf/*
+api/lib/Zend/*
+spec/*
+test/*
+api/conf/appconf.php
+gui/conf/appconf.php
+gui/log/logmanager.log
+gui/log/logmanager-errors.log
