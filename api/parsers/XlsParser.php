@@ -131,6 +131,11 @@
 				$colID = trim( $cellName, "0123456789" );			
 				$rowID = str_replace( $colID, "", $cellName );
 				
+				if( $cellName == "T6" )
+				{
+					echo $cellName . "\n";
+				}
+				
 				// create section
 				if( is_bool( $curSection ) )
 					$curSection = array( "rows" => array() );

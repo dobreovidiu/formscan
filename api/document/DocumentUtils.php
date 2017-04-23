@@ -541,6 +541,34 @@
 		}
 		
 		
+		// cleanup keyword value
+		static public function cleanupKeywordValue( $value )
+		{
+			$value = rtrim( $value, ":( " );
+			$value = ltrim( $value, "0123456789.* " );
+			$value = str_replace( " / ", "/", $value );
+			$value = str_replace( " /", "/", $value );						
+			$value = str_replace( "/ ", "/", $value );		
+
+			return $value;
+		}
+		
+		
+		// is string empty
+		static public function isStringEmpty( $value )
+		{
+			$value = str_replace( " ", "", $value );
+			$value = str_replace( "_", "", $value );			
+			$value = str_replace( "\n", "", $value );
+			$value = str_replace( "\r", "", $value );			
+
+			if( strlen( $value ) <= 0 )
+				return true;
+			
+			return false;
+		}
+		
+		
 		// normalize text
 		static public function normalizeText( &$text )
 		{		
@@ -622,7 +650,10 @@
 									array( "&ucirc;", 		"u" ),	
 									array( "&uuml;", 		"u" ),
 									array( "&yacute;", 		"y" ),	
-									array( "&yuml;", 		"y" )
+									array( "&yuml;", 		"y" ),
+									array( "&thinsp;", 		" " ),
+									array( "&ensp;", 		" " ),
+									array( "&emsp;", 		" " )							
 								 );
 			
 			// replace special characters

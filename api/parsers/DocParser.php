@@ -151,6 +151,9 @@
 					}										
 				}
 				
+				// normalize text
+				DocumentUtils::normalizeText( $entryVal );					
+				
 				// add row cell
 				array_push( $curRow, array( $colID, $entryVal ) );	
 				$colID++;					
@@ -249,8 +252,11 @@
 									if( is_string( $entry2Item ) )
 										$entryVal .= $entry2Item;							
 								}										
-							}
-							
+							}						
+				
+							// normalize text
+							DocumentUtils::normalizeText( $entryVal );	
+				
 							// add row cell
 							array_push( $curRow, array( $colID, $entryVal, $colWidth ) );
 							$colID++;									
@@ -272,8 +278,11 @@
 		static protected function processChapterString( &$item, &$curSection, &$curRow, &$rowID )
 		{
 			// create row			
-			$curRow = array();
-					
+			$curRow = array();					
+				
+			// normalize text
+			DocumentUtils::normalizeText( $item );	
+				
 			// add row cell
 			array_push( $curRow, array( 1, $item ) );
 			
@@ -298,7 +307,10 @@
 			foreach( $item as $entry )
 			{
 				if( is_string( $entry ) )
-				{
+				{						
+					// normalize text
+					DocumentUtils::normalizeText( $entry );	
+			
 					// add row cell
 					array_push( $curRow, array( $cellID, $entry ) );
 					$cellID++;

@@ -84,7 +84,7 @@
 			
 			// api key
 			$key = new UserApiKey();
-			if( !$key->loadAdminKey() )
+			if( !$key->loadUserKey( $userID ) )
 			{
 				$ret = array( 	"success" 	=> "false",
 								"exception"	=> "Failed to load service key. Please contact support."
@@ -202,7 +202,7 @@
 			
 			// api key
 			$key = new UserApiKey();
-			if( !$key->loadAdminKey() )
+			if( !$key->loadUserKey( $userID ) )
 			{
 				$ret = array( 	"success" 	=> "false",
 								"exception"	=> "Failed to load service key. Please contact support."
@@ -302,7 +302,7 @@
 			
 			// api key
 			$key = new UserApiKey();
-			if( !$key->loadAdminKey() )
+			if( !$key->loadUserKey( $userID ) )
 			{
 				$ret = array( 	"success" 	=> "false",
 								"exception"	=> "Failed to load service key. Please contact support."

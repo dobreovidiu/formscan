@@ -54,7 +54,7 @@ insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Family nam
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Other Names", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Preferred name", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Date of birth", 1, 1, '2016-01-01');
-insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Gender", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `allowedValues`, `status`, `dateAdded`) VALUES("Gender", 10, "Male|Female", 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `allowedValues`, `status`, `dateAdded`) VALUES("Sex", 10, "Male|Female", 1, '2016-01-01');
 
 
@@ -102,10 +102,13 @@ insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Position",
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Role/Title", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Credit Card", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Credit Card (numbers only)", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Expiration Date", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Signature", 14, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Applicant's signature", 14, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Date", 7, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Received by", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Notes", 2, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Details", 2, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Place", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Designation", 1, 1, '2016-01-01');
 

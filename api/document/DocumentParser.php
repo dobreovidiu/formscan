@@ -150,10 +150,16 @@
 		
 		// convert document to form
 		static public function convertDocumentToForm( &$document )
-		{
+		{			
+			// parse inputs
+			self::matchInputFields( $document );
+			
+			// parse checkboxes
+			self::matchCheckboxFields( $document );
+		
 			// parse questions
 			self::matchQuestionFields( $document );			
-			
+		
 			// match keywords fields
 			self::matchKeywordFields( $document );
 			
@@ -161,7 +167,343 @@
 			self::createFormFields( $document );
 			
 			return true;
+		}	
+		
+		
+		// parse inputs
+		protected function matchInputFields( &$document )
+		{
+			$sections = $document->getSections();
+			
+			// traverse sections
+			foreach( $sections as $section )
+			{
+				$rows = $section->getRows();
+					
+				// traverse rows
+				$noRows = count( $rows );
+				for( $j = 0; $j < $noRows; $j++ )
+				{
+					$cells = $rows[$j]->getCells();
+					
+					$fieldFound = false;
+					
+					// traverse cells
+					$no = count( $cells );
+					for( $i = 0; $i < $no; $i++ )
+					{
+						$cell = $cells[$i];
+						
+						// cell used
+						if( $cell["used"] )
+							continue;
+						
+						// cell value
+						$value = trim( $cell["value"] );
+						if( DocumentUtils::isStringEmpty( $value ) )
+							continue;
+						
+						if( strtolower( trim( $value ) ) == "{ formtext }" )
+							continue;
+						
+						// following 1 cell is { FORMTEXT }
+						if( ( $i + 1 ) < $no )
+						{
+							if( !$cells[$i+1]["used"] &&
+								strtolower( trim( $cells[$i+1]["value"] ) ) == "{ formtext }" )
+							{
+								$cells[$i+1]["used"] = 1;	
+
+								$cell["used"] 		= 1;
+								$cell["fieldFound"]	= 1;
+								$cell["fieldValue"]	= $cell["value"];
+								$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;
+							}
+						}
+						
+						// following 1 cell is empty field
+						if( ( $i + 1 ) < $no )
+						{
+							if( !$cells[$i+1]["used"] &&
+								DocumentUtils::isStringEmpty( $cells[$i+1]["value"] ) && strlen( $cells[$i+1]["value"] ) > 4 )
+							{
+								$cells[$i+1]["used"] = 1;	
+
+								$cell["used"] 		= 1;
+								$cell["fieldFound"]	= 1;
+								$cell["fieldValue"]	= $cell["value"];
+								$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;
+							}
+						}
+						
+						// following 1 row is empty space
+						if( ( $j + 1 ) < $noRows )
+						{
+							$cells1 = $rows[$j+1]->getCells();						
+							if( !$cells1[0]["used"] && strlen( $cells1[0]["value"] ) > 4 )
+							{
+								if( DocumentUtils::isStringEmpty( $cells1[0]["value"] ) )
+								{
+									$cells1[0]["used"] = 1;	
+
+									$cell["used"] 		= 1;
+									$cell["fieldFound"]	= 1;
+									$cell["fieldValue"]	= $cell["value"];
+									$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+									
+									$cells[$i] 	= $cell;
+									$fieldFound	= true;
+									continue;								
+								}
+							}
+						}
+						
+						// current cell ends with empty space
+						$pos = stripos( $value, "_" );
+						if( !is_bool( $pos ) && $pos > 0 && ( $pos + 4 ) <= strlen( $value ) )
+						{
+							$val2 = substr( $value, $pos );
+							if( DocumentUtils::isStringEmpty( $val2 ) )
+							{
+								$cells[$i+1]["used"] = 1;	
+
+								$cell["used"] 		= 1;
+								$cell["fieldFound"]	= 1;
+								$cell["fieldValue"]	= trim( substr( $value, 0, $pos ) );
+								$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;								
+							}
+						}
+					}
+					
+					// update cells
+					if( $fieldFound )
+						$rows[$j]->setCells( $cells );
+				}
+			}
+
+			return true;
 		}
+		
+		
+		// parse checkboxes
+		protected function matchCheckboxFields( &$document )
+		{
+			$sections = $document->getSections();
+			
+			// traverse sections
+			foreach( $sections as $section )
+			{
+				$rows = $section->getRows();
+					
+				// traverse rows
+				$noRows = count( $rows );
+				for( $j = 0; $j < $noRows; $j++ )
+				{
+					$cells = $rows[$j]->getCells();
+					
+					$fieldFound = false;
+					
+					// traverse cells
+					$no = count( $cells );
+					for( $i = 0; $i < $no; $i++ )
+					{
+						$cell = $cells[$i];
+						
+						// cell used
+						if( $cell["used"] )
+							continue;
+						
+						// cell value
+						$value = trim( $cell["value"] );
+						if( DocumentUtils::isStringEmpty( $value ) )
+							continue;
+						
+						if( strtolower( trim( $value ) ) == "{ formtext }" )
+							continue;
+						
+						// following 2 cells are Yes/No
+						if( ( $i + 2 ) < $no )
+						{
+							if( !$cells[$i+1]["used"] && !$cells[$i+2]["used"] &&
+								in_array( strtolower( $cells[$i+1]["value"] ), array( "yes", "no" ) ) &&
+								in_array( strtolower( $cells[$i+2]["value"] ), array( "yes", "no" ) ) )
+							{						
+								$cells[$i+1]["used"] = 1;
+								$cells[$i+2]["used"] = 1;		
+
+								$cell["used"] 			= 1;
+								$cell["fieldFound"]		= 1;
+								$cell["fieldValue"]		= $cell["value"];
+								$cell["fieldType"]		= DocumentSectionField::BOOLEAN;
+								$cell["fieldAllowed"]	= $cells[$i+1]["value"] . "|" . $cells[$i+2]["value"];
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;								
+							}
+						}
+						
+						// following 4 cells are empty/Yes/empty/No
+						if( ( $i + 4 ) < $no )
+						{
+							if( !$cells[$i+1]["used"] && !$cells[$i+2]["used"] && !$cells[$i+3]["used"] && !$cells[$i+4]["used"] &&
+								DocumentUtils::isStringEmpty( $cells[$i+1]["value"] ) &&							
+								in_array( strtolower( $cells[$i+2]["value"] ), array( "yes", "no" ) ) &&
+								DocumentUtils::isStringEmpty( $cells[$i+3]["value"] ) &&								
+								in_array( strtolower( $cells[$i+4]["value"] ), array( "yes", "no" ) ) )
+							{						
+								$cells[$i+1]["used"] = 1;
+								$cells[$i+2]["used"] = 1;		
+								$cells[$i+3]["used"] = 1;	
+								$cells[$i+4]["used"] = 1;									
+
+								$cell["used"] 			= 1;
+								$cell["fieldFound"]		= 1;
+								$cell["fieldValue"]		= $cell["value"];
+								$cell["fieldType"]		= DocumentSectionField::BOOLEAN;
+								$cell["fieldAllowed"]	= $cells[$i+2]["value"] . "|" . $cells[$i+4]["value"];
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;								
+							}	
+						}
+						
+						// following 4 cells are { FORMCHECKBOX }/Yes/{ FORMCHECKBOX }/No
+						if( ( $i + 4 ) < $no )
+						{
+							if( !$cells[$i+1]["used"] && !$cells[$i+2]["used"] && !$cells[$i+3]["used"] && !$cells[$i+4]["used"] &&
+								strtolower( trim( $cells[$i+1]["value"] ) ) == "{ formcheckbox }" &&							
+								in_array( strtolower( $cells[$i+2]["value"] ), array( "yes", "no" ) ) &&
+								strtolower( trim( $cells[$i+3]["value"] ) ) == "{ formcheckbox }" &&								
+								in_array( strtolower( $cells[$i+4]["value"] ), array( "yes", "no" ) ) )
+							{						
+								$cells[$i+1]["used"] = 1;
+								$cells[$i+2]["used"] = 1;		
+								$cells[$i+3]["used"] = 1;	
+								$cells[$i+4]["used"] = 1;									
+
+								$cell["used"] 			= 1;
+								$cell["fieldFound"]		= 1;
+								$cell["fieldValue"]		= $cell["value"];
+								$cell["fieldType"]		= DocumentSectionField::BOOLEAN;
+								$cell["fieldAllowed"]	= $cells[$i+2]["value"] . "|" . $cells[$i+4]["value"];
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;								
+							}	
+						}
+						
+						// following 2 rows are Yes/No
+						if( ( $j + 2 ) < $noRows )
+						{
+							$cells1 = $rows[$j+1]->getCells();
+							$cells2 = $rows[$j+2]->getCells();							
+							
+							if( count( $cells1 ) >= 1 && count( $cells2 ) >= 1 &&
+								!$cells1[0]["used"] && !$cells2[0]["used"] &&
+								in_array( strtolower( $cells1[0]["value"] ), array( "yes", "no" ) ) &&								
+								in_array( strtolower( $cells2[0]["value"] ), array( "yes", "no" ) ) )
+							{						
+								$cells1[0]["used"] = 1;
+								$cells2[0]["used"] = 1;		
+
+								$cell["used"] 			= 1;
+								$cell["fieldFound"]		= 1;
+								$cell["fieldValue"]		= $cell["value"];
+								$cell["fieldType"]		= DocumentSectionField::BOOLEAN;
+								$cell["fieldAllowed"]	= $cells1[0]["value"] . "|" . $cells2[0]["value"];
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;
+							}
+						}
+						
+						// following 1 cell is Yes/No
+						if( ( $i + 1 ) < $no )
+						{
+							$val2 = str_ireplace( "yes", "", $cells[$i+1]["value"] );
+							$val2 = str_ireplace( "no", "", $val2 );		
+							$val2 = str_ireplace( "_", "", $val2 );									
+							
+							if( !$cells[$i+1]["used"] &&
+								!is_bool( stripos( $cells[$i+1]["value"], "yes" ) ) &&
+								!is_bool( stripos( $cells[$i+1]["value"], "no" ) ) &&
+								DocumentUtils::isStringEmpty( $val2 ) )
+							{						
+								$cells[$i+1]["used"] = 1;
+								
+								$allowed = trim( $cells[$i+1]["value"] );
+								$allowed = preg_replace( '!\s+!', '|', $allowed );								
+
+								$cell["used"] 			= 1;
+								$cell["fieldFound"]		= 1;
+								$cell["fieldValue"]		= $cell["value"];
+								$cell["fieldType"]		= DocumentSectionField::BOOLEAN;
+								$cell["fieldAllowed"]	= $allowed;
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;								
+							}
+						}
+						
+						// following 1 row is Yes/No
+						if( ( $j + 1 ) < $noRows )
+						{
+							$cells1 = $rows[$j+1]->getCells();
+							if( count( $cells1 ) >= 1 )
+							{
+								$val2 = str_ireplace( "yes", "", $cells1[0]["value"] );
+								$val2 = str_ireplace( "no", "", $val2 );	
+								$val2 = str_ireplace( "_", "", $val2 );									
+								
+								if( !$cells1[0]["used"] &&
+									!is_bool( stripos( $cells1[0]["value"], "yes" ) ) &&
+									!is_bool( stripos( $cells1[0]["value"], "no" ) ) &&
+									DocumentUtils::isStringEmpty( $val2 ) )
+								{						
+									$cells1[0]["used"] = 1;
+									
+									$allowed = trim( $cells1[0]["value"] );
+									$allowed = preg_replace( '!\s+!', '|', $allowed );								
+
+									$cell["used"] 			= 1;
+									$cell["fieldFound"]		= 1;
+									$cell["fieldValue"]		= $cell["value"];
+									$cell["fieldType"]		= DocumentSectionField::BOOLEAN;
+									$cell["fieldAllowed"]	= "Yes|No";
+									
+									$cells[$i] 	= $cell;
+									$fieldFound	= true;
+									continue;								
+								}
+							}
+						}						
+					}
+					
+					// update cells
+					if( $fieldFound )
+						$rows[$j]->setCells( $cells );
+				}
+			}
+
+			return true;
+		}		
 		
 		
 		// parse questions
@@ -175,9 +517,10 @@
 				$rows = $section->getRows();
 					
 				// traverse rows
-				foreach( $rows as $row )
+				$noRows = count( $rows );
+				for( $j = 0; $j < $noRows; $j++ )
 				{
-					$cells = $row->getCells();
+					$cells = $rows[$j]->getCells();
 					
 					$fieldFound = false;
 					
@@ -197,50 +540,6 @@
 						if( substr( $value, -1 ) != "?" )
 							continue;
 						
-						// following 2 cells are Yes/No
-						if( ( $i + 2 ) < $no )
-						{
-							if( in_array( strtolower( $cells[$i+1]["value"] ), array( "yes", "no" ) ) &&
-								in_array( strtolower( $cells[$i+2]["value"] ), array( "yes", "no" ) ) )
-							{						
-								$cells[$i+1]["used"] = 1;
-								$cells[$i+2]["used"] = 1;		
-
-								$cell["used"] 			= 1;
-								$cell["fieldFound"]		= 1;
-								$cell["fieldValue"]		= $cell["value"];
-								$cell["fieldType"]		= DocumentSectionField::BOOLEAN;
-								$cell["fieldAllowed"]	= $cells[$i+1]["value"] . "|" . $cells[$i+2]["value"];
-								
-								$cells[$i] 	= $cell;
-								$fieldFound	= true;
-								break;								
-							}	
-						}
-						
-						// following 1 cell is Yes/No
-						if( ( $i + 1 ) < $no )
-						{
-							if( !is_bool( stripos( $cells[$i+1]["value"], "yes" ) ) &&
-								!is_bool( stripos( $cells[$i+1]["value"], "no" ) ) )
-							{						
-								$cells[$i+1]["used"] = 1;
-								
-								$allowed = trim( $cells[$i+1]["value"] );
-								$allowed = preg_replace( '!\s+!', '|', $allowed );								
-
-								$cell["used"] 			= 1;
-								$cell["fieldFound"]		= 1;
-								$cell["fieldValue"]		= $cell["value"];
-								$cell["fieldType"]		= DocumentSectionField::BOOLEAN;
-								$cell["fieldAllowed"]	= $allowed;
-								
-								$cells[$i] 	= $cell;
-								$fieldFound	= true;
-								break;								
-							}
-						}
-						
 						// single question cell
 						if( ( $i + 1 ) >= $no )
 						{
@@ -251,18 +550,18 @@
 							
 							$cells[$i] 	= $cell;
 							$fieldFound	= true;
-							break;								
+							continue;								
 						}
 					}
 					
 					// update cells
 					if( $fieldFound )
-						$row->setCells( $cells );					
+						$rows[$j]->setCells( $cells );
 				}
 			}
 
 			return true;
-		}		
+		}	
 		
 		
 		// match keywords fields
@@ -292,11 +591,18 @@
 						
 						// cell used
 						if( $cell["used"] )
-							continue;
+						{
+							if( !isset( $cell["fieldFound"] ) || $cell["fieldType"] != DocumentSectionField::INPUTTEXT )
+								continue;
+						}
+	
+						if( isset( $cell["fieldValue"] ) )
+							$value = $cell["fieldValue"];
+						else
+							$value = $cell["value"];			
 						
-						$value 	= rtrim( $cell["value"], ":( " );
-						$value 	= ltrim( $value, "0123456789. " );
-						$value2 = strtolower( $value );
+						$value	= DocumentUtils::cleanupKeywordValue( $value );
+						$value2 = strtolower( $value );			
 						
 						// verify keywords
 						foreach( $keywords as $keyword )
@@ -314,7 +620,7 @@
 								
 								$cells[$i] 	= $cell;
 								$fieldFound	= true;
-								break;
+								continue;
 							}
 						}
 					}
@@ -354,6 +660,10 @@
 						$allowedValues = "";
 						if( isset( $cell["fieldAllowed"] ) )
 							$allowedValues = $cell["fieldAllowed"];
+						
+						$cell["fieldValue"] = str_replace( "\r\n", " ", $cell["fieldValue"] );
+						$cell["fieldValue"] = str_replace( "\n", " ", $cell["fieldValue"] );
+						$cell["fieldValue"] = str_replace( "\r", " ", $cell["fieldValue"] );
 						
 						// add field
 						$section->addField( $cell["fieldValue"], $cell["fieldType"], $allowedValues );

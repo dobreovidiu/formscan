@@ -84,6 +84,7 @@
 		{
 			global $user;
 			global $documentID;
+			global $fatFingerEnabled;
 			
 			$isJob = true;
 				
@@ -149,6 +150,12 @@
 				ApiDb::disconnect();
 				return false;
 			}
+			
+			// debug 
+			if( $user["username"] != "admin" )
+				$fatFingerEnabled = false;
+			else
+				$fatFingerEnabled = true;
 			
 			$startTime = time();
 			
