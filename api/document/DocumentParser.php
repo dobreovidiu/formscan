@@ -154,6 +154,9 @@
 			// parse inputs
 			self::matchInputFields( $document );
 			
+			// parse multicheckboxes
+			self::matchMultiCheckboxFields( $document );
+			
 			// parse checkboxes
 			self::matchCheckboxFields( $document );
 		
@@ -225,6 +228,25 @@
 							}
 						}
 						
+						// following 1 cell is :
+						if( ( $i + 1 ) < $no )
+						{
+							if( !$cells[$i+1]["used"] &&
+								strtolower( trim( $cells[$i+1]["value"] ) ) == ":" )
+							{
+								$cells[$i+1]["used"] = 1;	
+
+								$cell["used"] 		= 1;
+								$cell["fieldFound"]	= 1;
+								$cell["fieldValue"]	= $cell["value"];
+								$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;
+							}
+						}
+						
 						// following 1 cell is empty field
 						if( ( $i + 1 ) < $no )
 						{
@@ -241,28 +263,6 @@
 								$cells[$i] 	= $cell;
 								$fieldFound	= true;
 								continue;
-							}
-						}
-						
-						// following 1 row is empty space
-						if( ( $j + 1 ) < $noRows )
-						{
-							$cells1 = $rows[$j+1]->getCells();						
-							if( !$cells1[0]["used"] && strlen( $cells1[0]["value"] ) > 4 )
-							{
-								if( DocumentUtils::isStringEmpty( $cells1[0]["value"] ) )
-								{
-									$cells1[0]["used"] = 1;	
-
-									$cell["used"] 		= 1;
-									$cell["fieldFound"]	= 1;
-									$cell["fieldValue"]	= $cell["value"];
-									$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
-									
-									$cells[$i] 	= $cell;
-									$fieldFound	= true;
-									continue;								
-								}
 							}
 						}
 						
@@ -285,6 +285,28 @@
 								continue;								
 							}
 						}
+						
+						// following 1 row is empty space
+						if( ( $j + 1 ) < $noRows )
+						{
+							$cells1 = $rows[$j+1]->getCells();						
+							if( count( $cells1 ) > 0 && !$cells1[0]["used"] && strlen( $cells1[0]["value"] ) > 4 )
+							{
+								if( DocumentUtils::isStringEmpty( $cells1[0]["value"] ) )
+								{
+									$cells1[0]["used"] = 1;	
+
+									$cell["used"] 		= 1;
+									$cell["fieldFound"]	= 1;
+									$cell["fieldValue"]	= $cell["value"];
+									$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+									
+									$cells[$i] 	= $cell;
+									$fieldFound	= true;
+									continue;								
+								}
+							}
+						}
 					}
 					
 					// update cells
@@ -295,6 +317,100 @@
 
 			return true;
 		}
+		
+		
+		// parse multicheckboxes
+		protected function matchMultiCheckboxFields( &$document )
+		{
+			$sections = $document->getSections();
+			
+			// traverse sections
+			foreach( $sections as $section )
+			{
+				$rows = $section->getRows();
+					
+				// traverse rows
+				$noRows = count( $rows );
+				for( $j = 0; $j < $noRows; $j++ )
+				{
+					$cells = $rows[$j]->getCells();
+					
+					$fieldFound = false;
+					
+					// traverse cells
+					$no = count( $cells );
+					for( $i = 0; $i < $no; $i++ )
+					{
+						$cell = $cells[$i];
+						
+						// cell used
+						if( $cell["used"] )
+							continue;
+						
+						// cell value
+						$value = trim( $cell["value"] );
+						if( DocumentUtils::isStringEmpty( $value ) )
+							continue;
+						
+						if( strtolower( trim( $value ) ) == "{ formtext }" )
+							continue;
+						
+						$colIdx  = 0;
+						$options = array();						
+
+						// following cells are { FORMCHECKBOX }/OPTION1/{ FORMCHECKBOX }/OPTION2/...
+						for( $k = $i + 1; $k < $no; $k++ )
+						{
+							if( $cells[$k]["used"] )
+								break;
+
+							$colIdx++;
+							if( ( $colIdx % 2 == 1 ) && strtolower( trim( $cells[$k]["value"] ) ) != "{ formcheckbox }" )
+								break;
+							
+							if( $colIdx % 2 == 0 )
+								array_push( $options, $k );
+						}
+						
+						// multi-value found
+						if( count( $options ) >= 3 )
+						{
+							$values = array();
+							foreach( $options as $k )
+							{
+								$cells[ $k ]["used"] = 1;
+								array_push( $values, $cells[ $k ]["value"] );
+							}
+							
+							$cell["used"] 			= 1;
+							$cell["fieldFound"]		= 1;
+							$cell["fieldValue"]		= $cell["value"];
+							
+							if( count( $options ) == 3 )
+							{
+								$cell["fieldType"]		= DocumentSectionField::TRILEAN;
+								$cell["fieldAllowed"]	= implode( "|", $values );
+							}
+							else
+							{
+								$cell["fieldType"]		= DocumentSectionField::SINGLESELECT;
+								$cell["fieldAllowed"]	= implode( "\n", $values );								
+							}
+							
+							$cells[$i] 	= $cell;
+							$fieldFound	= true;
+							continue;								
+						}					
+					}
+					
+					// update cells
+					if( $fieldFound )
+						$rows[$j]->setCells( $cells );
+				}
+			}
+
+			return true;
+		}		
 		
 		
 		// parse checkboxes
@@ -353,6 +469,32 @@
 								$fieldFound	= true;
 								continue;								
 							}
+						}
+						
+						// following 4 cells are Yes/empty/No/empty
+						if( ( $i + 4 ) < $no )
+						{
+							if( !$cells[$i+1]["used"] && !$cells[$i+2]["used"] && !$cells[$i+3]["used"] && !$cells[$i+4]["used"] &&
+								in_array( strtolower( $cells[$i+1]["value"] ), array( "yes", "no" ) ) &&							
+								DocumentUtils::isStringEmpty( $cells[$i+2]["value"] ) &&								
+								in_array( strtolower( $cells[$i+3]["value"] ), array( "yes", "no" ) ) &&							
+								DocumentUtils::isStringEmpty( $cells[$i+4]["value"] ) )
+							{						
+								$cells[$i+1]["used"] = 1;
+								$cells[$i+2]["used"] = 1;		
+								$cells[$i+3]["used"] = 1;	
+								$cells[$i+4]["used"] = 1;									
+
+								$cell["used"] 			= 1;
+								$cell["fieldFound"]		= 1;
+								$cell["fieldValue"]		= $cell["value"];
+								$cell["fieldType"]		= DocumentSectionField::BOOLEAN;
+								$cell["fieldAllowed"]	= $cells[$i+1]["value"] . "|" . $cells[$i+3]["value"];
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;								
+							}	
 						}
 						
 						// following 4 cells are empty/Yes/empty/No
@@ -664,6 +806,7 @@
 						$cell["fieldValue"] = str_replace( "\r\n", " ", $cell["fieldValue"] );
 						$cell["fieldValue"] = str_replace( "\n", " ", $cell["fieldValue"] );
 						$cell["fieldValue"] = str_replace( "\r", " ", $cell["fieldValue"] );
+						$cell["fieldValue"] = ucfirst( $cell["fieldValue"] );
 						
 						// add field
 						$section->addField( $cell["fieldValue"], $cell["fieldType"], $allowedValues );

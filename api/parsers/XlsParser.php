@@ -144,6 +144,9 @@
 				if( !isset( $curSection["rows"][ $rowID ] ) )
 					$curSection["rows"][ $rowID ] = array();					
 				
+				// normalize text
+				DocumentUtils::normalizeText( $val );		
+			
 				// add row cell
 				array_push( $curSection["rows"][ $rowID ], array( $colID, $val ) );
 			}

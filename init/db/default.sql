@@ -42,7 +42,6 @@ insert into `userapikey` (`userID`, `name`, `key`, `status`, `dateAdded`) VALUES
 -- keyword
 
 -- personal information
-insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Credit Card Holder", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Title", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Name", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Full Name", 1, 1, '2016-01-01');
@@ -53,7 +52,7 @@ insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Surname", 
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Family name", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Other Names", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Preferred name", 1, 1, '2016-01-01');
-insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Date of birth", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Date of birth", 7, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `allowedValues`, `status`, `dateAdded`) VALUES("Gender", 10, "Male|Female", 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `allowedValues`, `status`, `dateAdded`) VALUES("Sex", 10, "Male|Female", 1, '2016-01-01');
 
@@ -90,6 +89,9 @@ insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Daytime Ph
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Fax", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Email", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Email address", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("E-mail", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("E-mail address", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Mail address", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Re-type Email", 1, 1, '2016-01-01');
 
 
@@ -100,12 +102,21 @@ insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Organisati
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Company Name", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Position", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Role/Title", 1, 1, '2016-01-01');
-insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Credit Card", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `allowedValues`, `status`, `dateAdded`) VALUES("Credit Card", 4, "Visa\nAmerican Express\nMasterCard\nDiscover\nJCB\nDiners Club", 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `allowedValues`, `status`, `dateAdded`) VALUES("Card Type", 4, "Visa\nAmerican Express\nMasterCard\nDiscover\nJCB\nDiners Club", 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Credit Card (numbers only)", 1, 1, '2016-01-01');
-insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Expiration Date", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Card Number", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("CVV Number", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Credit Card Holder", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Cardholder Name", 1, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Valid Thru", 7, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Expiration Date", 7, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Signature", 14, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Applicant's signature", 14, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Signed", 14, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Date", 7, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Date From", 7, 1, '2016-01-01');
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Date To", 7, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Received by", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Notes", 2, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Details", 2, 1, '2016-01-01');

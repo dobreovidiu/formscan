@@ -337,7 +337,7 @@
 			{
 				$file = "storage/documents/" . date( "YmdHis", time() ) . "_" . rand() . ".xml";
 				
-				$cmd = "antiword -x db " . $filepath . " > " . $file;
+				$cmd = "/root/bin/antiword -x db " . $filepath . " > " . $file;
 				
 				@passthru( $cmd );
 			}

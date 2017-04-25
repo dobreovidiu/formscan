@@ -158,7 +158,7 @@
 				if( response.completed != undefined && response.completed == "1" )
 				{				
 					document.getElementById("processBut").disabled = false;
-					showStatus( "Confirmation", "The Fat Finger app has been created successfully!<br><br>App Title: <b>" + response.title + "</b>" );
+					showStatus( "Confirmation", "The Fat Finger app has been created successfully!<br><br>App Title: <b>" + response.title + "</b><br><br>Fat Finger account: dobreovidiu@hotmail.com" );
 					return;
 				}
 				

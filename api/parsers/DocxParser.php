@@ -273,17 +273,9 @@
 				{
 					$text = $element->getText();
 					if( strlen( $text ) > 0 )
-					{
-						if( $text[0] != ' ' && strlen( $result ) > 0 && $result[ strlen( $result ) - 1 ] != ' ' && 
-							DocumentUtils::isHeaderElementText2( $result ) )
-							$result .= " ";
-							
 						$result .= $text;
-					}
 					else
-					{
 						$result .= " ";
-					}
 				}
 				else
 				// ListItem
