@@ -36,7 +36,7 @@
 				$document->outputRows( false );
 			
 			// convert document to form
-			if( !self::convertDocumentToForm( $document ) )
+			if( !self::convertDocumentToForm( $format, $document ) )
 				return false;
 			
 			// logging
@@ -149,32 +149,63 @@
 		
 		
 		// convert document to form
-		static public function convertDocumentToForm( &$document )
+		static protected function convertDocumentToForm( $format, &$document )
 		{			
+			// determine form tags
+			$tags = self::determineFormTags( $format );
+		
 			// parse inputs
-			self::matchInputFields( $document );
+			self::matchInputFields( $document, $tags );
 			
-			// parse multicheckboxes
-			self::matchMultiCheckboxFields( $document );
+			// parse textboxes
+			self::matchTextboxFields( $document, $tags );
+			
+			// parse select
+			self::matchSelectFields( $document, $tags );
 			
 			// parse checkboxes
-			self::matchCheckboxFields( $document );
-		
+			self::matchCheckboxFields( $document, $tags );
+			
 			// parse questions
-			self::matchQuestionFields( $document );			
-		
+			self::matchQuestionFields( $document, $tags );			
+			
 			// match keywords fields
-			self::matchKeywordFields( $document );
+			self::matchKeywordFields( $document, $tags );
 			
 			// create form fields
-			self::createFormFields( $document );
+			self::createFormFields( $document, $tags );
 			
 			return true;
-		}	
+		}
+		
+		
+		// determine form tags
+		static protected function determineFormTags( $format )
+		{	
+			// form tags
+			$tags = array( "checkbox"	=> false,
+						   "textbox"	=> false );
+			
+			// docX
+			if( $format == "docx" )
+			{
+				$tags = array( "checkbox"	=> "{ formcheckbox }",
+							   "textbox"	=> "{ formtext }" );				
+			}
+			else
+			// xls/xlsx
+			if( $format == "xls" || $format == "xlsx" )
+			{
+				$tags = array( "checkbox"	=> "{ formcheckbox }",
+							   "textbox"	=> "{ formtext }" );				
+			}			
+			
+			return $tags;
+		}
 		
 		
 		// parse inputs
-		protected function matchInputFields( &$document )
+		static protected function matchInputFields( &$document, $tags )
 		{
 			$sections = $document->getSections();
 			
@@ -206,21 +237,27 @@
 						if( DocumentUtils::isStringEmpty( $value ) )
 							continue;
 						
-						if( strtolower( trim( $value ) ) == "{ formtext }" )
+						if( ( !is_bool( $tags["checkbox"] ) && strtolower( $value ) == $tags["checkbox"] ) || 
+							( !is_bool( $tags["textbox"] ) && strtolower( $value ) == $tags["textbox"] ) )
 							continue;
 						
 						// following 1 cell is { FORMTEXT }
-						if( ( $i + 1 ) < $no )
+						if( ( $i + 1 ) < $no && !is_bool( $tags["textbox"] ) )
 						{
 							if( !$cells[$i+1]["used"] &&
-								strtolower( trim( $cells[$i+1]["value"] ) ) == "{ formtext }" )
-							{
+								strtolower( trim( $cells[$i+1]["value"] ) ) == $tags["textbox"] )
+							{						
+								if( DocumentUtils::isHeaderElementText( $value ) )
+									continue;
+							
 								$cells[$i+1]["used"] = 1;	
 
-								$cell["used"] 		= 1;
-								$cell["fieldFound"]	= 1;
-								$cell["fieldValue"]	= $cell["value"];
-								$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+								$cell["used"] 			= 1;
+								$cell["fieldFound"]		= 1;
+								$cell["fieldValue"]		= $cell["value"];
+								$cell["fieldType"]		= DocumentSectionField::INPUTTEXT;
+								$cell["fieldTextRow"]	= $j;
+								$cell["fieldTextCol"]	= $i + 1;
 								
 								$cells[$i] 	= $cell;
 								$fieldFound	= true;
@@ -228,12 +265,42 @@
 							}
 						}
 						
+						// following 2 cells are : { FORMTEXT }
+						if( ( $i + 2 ) < $no && !is_bool( $tags["textbox"] ) )
+						{
+							if( !$cells[$i+1]["used"] && !$cells[$i+2]["used"] &&
+								strtolower( trim( $cells[$i+1]["value"] ) ) == ":" &&
+								strtolower( trim( $cells[$i+2]["value"] ) ) == $tags["textbox"] )
+							{						
+								if( DocumentUtils::isHeaderElementText( $value ) )
+									continue;
+							
+								$cells[$i+1]["used"] = 1;	
+								$cells[$i+2]["used"] = 1;								
+
+								$cell["used"] 			= 1;
+								$cell["fieldFound"]		= 1;
+								$cell["fieldValue"]		= $cell["value"];
+								$cell["fieldType"]		= DocumentSectionField::INPUTTEXT;
+								$cell["fieldTextRow"]	= $j;
+								$cell["fieldTextCol"]	= $i + 2;
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;
+							}
+						}
+						
+						
 						// following 1 cell is :
 						if( ( $i + 1 ) < $no )
 						{
 							if( !$cells[$i+1]["used"] &&
 								strtolower( trim( $cells[$i+1]["value"] ) ) == ":" )
 							{
+								if( DocumentUtils::isHeaderElementText( $value ) )
+									continue;
+								
 								$cells[$i+1]["used"] = 1;	
 
 								$cell["used"] 		= 1;
@@ -248,11 +315,14 @@
 						}
 						
 						// following 1 cell is empty field
-						if( ( $i + 1 ) < $no )
+						if( ( $i + 1 ) < $no && is_bool( $tags["textbox"] ) )
 						{
 							if( !$cells[$i+1]["used"] &&
 								DocumentUtils::isStringEmpty( $cells[$i+1]["value"] ) && strlen( $cells[$i+1]["value"] ) > 4 )
 							{
+								if( DocumentUtils::isHeaderElementText( $value ) )
+									continue;
+								
 								$cells[$i+1]["used"] = 1;	
 
 								$cell["used"] 		= 1;
@@ -267,33 +337,90 @@
 						}
 						
 						// current cell ends with empty space
-						$pos = stripos( $value, "_" );
-						if( !is_bool( $pos ) && $pos > 0 && ( $pos + 4 ) <= strlen( $value ) )
+						if( is_bool( $tags["textbox"] ) && is_bool( $tags["textbox"] ) )
 						{
-							$val2 = substr( $value, $pos );
-							if( DocumentUtils::isStringEmpty( $val2 ) )
+							$pos = stripos( $value, "_" );
+							if( !is_bool( $pos ) && $pos > 0 && ( $pos + 4 ) <= strlen( $value ) )
 							{
-								$cells[$i+1]["used"] = 1;	
-
-								$cell["used"] 		= 1;
-								$cell["fieldFound"]	= 1;
-								$cell["fieldValue"]	= trim( substr( $value, 0, $pos ) );
-								$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+								$val2 = substr( $value, $pos );
+								if( DocumentUtils::isStringEmpty( $val2 ) )
+								{
+									if( DocumentUtils::isHeaderElementText( $value ) )
+										continue;
 								
-								$cells[$i] 	= $cell;
-								$fieldFound	= true;
-								continue;								
+									$cells[$i+1]["used"] = 1;	
+
+									$cell["used"] 		= 1;
+									$cell["fieldFound"]	= 1;
+									$cell["fieldValue"]	= trim( substr( $value, 0, $pos ) );
+									$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+									
+									$cells[$i] 	= $cell;
+									$fieldFound	= true;
+									continue;								
+								}
 							}
 						}
 						
+						// following 1 row is { FORMTEXT }
+						if( ( $j + 1 ) < $noRows && !is_bool( $tags["textbox"] ) )
+						{
+							$cells1 = $rows[$j+1]->getCells();		
+							
+							if( count( $cells1 ) > 0 && !$cells1[0]["used"] && 
+								$cells[$i]["name"] == $cells1[0]["name"] &&
+								strtolower( trim( $cells1[0]["value"] ) ) == $tags["textbox"] )
+							{
+								if( DocumentUtils::isHeaderElementText( $value ) )
+									continue;
+								
+								$cells1[0]["used"] = 1;	
+
+								$cell["used"] 			= 1;
+								$cell["fieldFound"]		= 1;
+								$cell["fieldValue"]		= $cell["value"];
+								$cell["fieldType"]		= DocumentSectionField::INPUTTEXT;
+								$cell["fieldTextRow"]	= $j + 1;
+								$cell["fieldTextCol"]	= 0;								
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;
+							}
+							
+							if( count( $cells1 ) > $i && !$cells1[$i]["used"] && 
+								$cells[$i]["name"] == $cells1[$i]["name"] &&							
+								strtolower( trim( $cells1[$i]["value"] ) ) == $tags["textbox"] )
+							{
+								if( DocumentUtils::isHeaderElementText( $value ) )
+									continue;
+								
+								$cells1[$i]["used"] = 1;	
+
+								$cell["used"] 			= 1;
+								$cell["fieldFound"]		= 1;
+								$cell["fieldValue"]		= $cell["value"];
+								$cell["fieldType"]		= DocumentSectionField::INPUTTEXT;
+								$cell["fieldTextRow"]	= $j + 1;
+								$cell["fieldTextCol"]	= $i;									
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;
+							}							
+						}
+						
 						// following 1 row is empty space
-						if( ( $j + 1 ) < $noRows )
+						if( ( $j + 1 ) < $noRows && is_bool( $tags["textbox"] ) )
 						{
 							$cells1 = $rows[$j+1]->getCells();						
 							if( count( $cells1 ) > 0 && !$cells1[0]["used"] && strlen( $cells1[0]["value"] ) > 4 )
 							{
 								if( DocumentUtils::isStringEmpty( $cells1[0]["value"] ) )
 								{
+									if( DocumentUtils::isHeaderElementText( $value ) )
+										continue;
+								
 									$cells1[0]["used"] = 1;	
 
 									$cell["used"] 		= 1;
@@ -305,6 +432,105 @@
 									$fieldFound	= true;
 									continue;								
 								}
+							}
+							
+							$cells1 = $rows[$j+1]->getCells();						
+							if( count( $cells1 ) > $i && !$cells1[$i]["used"] && strlen( $cells1[$i]["value"] ) > 4 )
+							{
+								if( DocumentUtils::isStringEmpty( $cells1[$i]["value"] ) )
+								{
+									if( DocumentUtils::isHeaderElementText( $value ) )
+										continue;
+								
+									$cells1[$i]["used"] = 1;	
+
+									$cell["used"] 		= 1;
+									$cell["fieldFound"]	= 1;
+									$cell["fieldValue"]	= $cell["value"];
+									$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+									
+									$cells[$i] 	= $cell;
+									$fieldFound	= true;
+									continue;								
+								}
+							}		
+						}
+					}
+					
+					// update cells
+					if( $fieldFound )
+						$rows[$j]->setCells( $cells );
+				}
+			}
+
+			return true;
+		}
+		
+		
+		// parse textboxes
+		static protected function matchTextboxFields( &$document, $tags )
+		{
+			$sections = $document->getSections();
+			
+			// traverse sections
+			foreach( $sections as $section )
+			{
+				$rows = $section->getRows();
+					
+				// traverse rows
+				$noRows = count( $rows );
+				for( $j = 0; $j < $noRows; $j++ )
+				{
+					$cells = $rows[$j]->getCells();
+					
+					$fieldFound = false;
+					
+					// traverse cells
+					$no = count( $cells );
+					for( $i = 0; $i < $no; $i++ )
+					{
+						$cell = $cells[$i];
+						
+						// cell used
+						if( !$cell["used"] || !isset( $cell["fieldType"] ) || !isset( $cell["fieldTextRow"] ) )
+							continue;
+						
+						if( $cell["fieldType"] != DocumentSectionField::INPUTTEXT )
+							continue;
+						
+
+						// following line is { FORMTEXT }
+						if( ( $cell["fieldTextRow"] + 1 ) < $noRows && !is_bool( $tags["textbox"] ) )
+						{
+							$k1 = $cell["fieldTextRow"];
+							
+							$cells1 = $rows[$k1]->getCells();		
+							$cells2 = $rows[$k1+1]->getCells();								
+							$noK2 	= count( $cells2 );
+							
+							$cellType = false;
+							
+							for( $k2 = 0; $k2 < $noK2; $k2++ )
+							{
+								if( $cells2[$k2]["used"] == 0 &&
+									$cells2[$k2]["name"] == $cells1[ $cell["fieldTextCol"] ]["name"] && 
+									strtolower( trim( $cells2[$k2]["value"] ) ) == $tags["textbox"] )
+								{
+									$cells2[$k2]["used"] = 1;
+									$rows[$k1+1]->setCells( $cells2 );
+									
+									$cellType = DocumentSectionField::TEXTBOX;
+									break;
+								}
+							}
+							
+							if( !is_bool( $cellType ) )
+							{
+								$cell["fieldType"] = $cellType;
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;
 							}
 						}
 					}
@@ -319,8 +545,8 @@
 		}
 		
 		
-		// parse multicheckboxes
-		protected function matchMultiCheckboxFields( &$document )
+		// parse select
+		static protected function matchSelectFields( &$document, $tags )
 		{
 			$sections = $document->getSections();
 			
@@ -352,40 +578,157 @@
 						if( DocumentUtils::isStringEmpty( $value ) )
 							continue;
 						
-						if( strtolower( trim( $value ) ) == "{ formtext }" )
+						if( ( !is_bool( $tags["checkbox"] ) && strtolower( $value ) == $tags["checkbox"] ) || 
+							( !is_bool( $tags["textbox"] ) && strtolower( $value ) == $tags["textbox"] ) )
 							continue;
+
 						
-						$colIdx  = 0;
-						$options = array();						
+						$options 		= array();
+						$optionsEmpty	= array();
+						$colIdx			= 0;
 
 						// following cells are { FORMCHECKBOX }/OPTION1/{ FORMCHECKBOX }/OPTION2/...
-						for( $k = $i + 1; $k < $no; $k++ )
+						for( $k2 = $i + 1; $k2 < $no; $k2++ )
 						{
-							if( $cells[$k]["used"] )
+							if( $cells[ $k2 ]["used"] )
 								break;
 
 							$colIdx++;
-							if( ( $colIdx % 2 == 1 ) && strtolower( trim( $cells[$k]["value"] ) ) != "{ formcheckbox }" )
-								break;
+							if( ( $colIdx % 2 == 1 ) )
+							{
+								if( !is_bool( $tags["checkbox"] ) && strtolower( trim( $cells[ $k2 ]["value"] ) ) != $tags["checkbox"] )
+									break;
+									
+								if( is_bool( $tags["checkbox"] ) )
+								{
+									if( !DocumentUtils::isStringEmpty( $cells[ $k2 ]["value"] ) )
+										break;
+									
+									if( is_bool( $cells[ $k2 ]["width"] ) || $cells[ $k2 ]["width"] > 30 )
+										break;
+								}
+							}
 							
 							if( $colIdx % 2 == 0 )
-								array_push( $options, $k );
+							{
+								$found = true;
+								array_push( $options, array( $j, $k2 ) );
+							}
+							else
+							{
+								array_push( $optionsEmpty, array( $j, $k2 ) );								
+							}
 						}
 						
+						
+						$isMultiValue = false;
+						if( count( $options ) >= 3 || ( !is_bool( $tags["checkbox"] ) && count( $options ) >= 1 ) )
+							$isMultiValue = true;
+
+						// multi-value not found
+						if( !$isMultiValue )
+						{
+							$options 		= array();
+							$optionsEmpty	= array();
+							
+							// following rows are { FORMCHECKBOX }/OPTION1/{ FORMCHECKBOX }/OPTION2/...
+							for( $k1 = $j + 1; $k1 < $noRows; $k1++ )
+							{
+								$cellsItem	= $rows[ $k1 ]->getCells();
+								$noK2  		= count( $cellsItem );
+								$colIdx  	= 0;
+								$found		= false;
+								
+								if( $noK2 <= $i )
+									break;
+								
+								for( $k2 = $i; $k2 < $noK2; $k2++ )
+								{
+									if( $cellsItem[ $k2 ]["used"] )
+										break;
+
+									$colIdx++;
+									if( ( $colIdx % 2 == 1 ) )
+									{
+										if( !is_bool( $tags["checkbox"] ) && strtolower( trim( $cellsItem[ $k2 ]["value"] ) ) != $tags["checkbox"] )
+											break;
+											
+										if( is_bool( $tags["checkbox"] ) )
+										{
+											if( !DocumentUtils::isStringEmpty( $cellsItem[ $k2 ]["value"] ) )
+												break;
+											
+											if( is_bool( $cellsItem[ $k2 ]["width"] ) || $cellsItem[ $k2 ]["width"] > 30 )
+												break;
+										}
+									}
+									
+									if( $colIdx % 2 == 0 )
+									{
+										if( ( !is_bool( $tags["checkbox"] ) && strtolower( trim( $cellsItem[ $k2 ]["value"] ) ) == $tags["checkbox"] ) || 
+											( !is_bool( $tags["textbox"] ) && strtolower( trim( $cellsItem[ $k2 ]["value"] ) ) == $tags["textbox"] ) )
+											break;
+							
+										if( DocumentUtils::isStringEmpty( $cellsItem[ $k2 ]["value"] ) )
+											break;
+											
+										$found = true;
+										array_push( $options, array( $k1, $k2 ) );
+									}
+									else
+									{
+										array_push( $optionsEmpty, array( $k1, $k2 ) );								
+									}
+								}
+								
+								if( !$found && $k1 > $j )
+									break;
+							}
+						}
+						
+						
+						$isMultiValue = false;
+						if( count( $options ) >= 3 || ( !is_bool( $tags["checkbox"] ) && count( $options ) >= 1 ) )
+							$isMultiValue = true;
+						
 						// multi-value found
-						if( count( $options ) >= 3 )
+						if( $isMultiValue )
 						{
 							$values = array();
-							foreach( $options as $k )
+							foreach( $options as $item )
 							{
-								$cells[ $k ]["used"] = 1;
-								array_push( $values, $cells[ $k ]["value"] );
+								$cellsItem = $rows[ $item[0] ]->getCells();
+								$cellsItem[ $item[1] ]["used"] = 1;
+								
+								array_push( $values, $cellsItem[ $item[1] ]["value"] );								
+								$rows[ $item[0] ]->setCells( $cellsItem );
 							}
+							
+							foreach( $optionsEmpty as $item )
+							{
+								$cellsItem = $rows[ $item[0] ]->getCells();
+								$cellsItem[ $item[1] ]["used"] = 1;
+								$rows[ $item[0] ]->setCells( $cellsItem );								
+							}
+							
+							$cells = $rows[$j]->getCells();
 							
 							$cell["used"] 			= 1;
 							$cell["fieldFound"]		= 1;
 							$cell["fieldValue"]		= $cell["value"];
 							
+							if( count( $options ) == 1 )
+							{
+								$cell["fieldType"]		= DocumentSectionField::SINGLESELECT;
+								$cell["fieldAllowed"]	= implode( "\n", $values );
+							}
+							else								
+							if( count( $options ) == 2 )
+							{
+								$cell["fieldType"]		= DocumentSectionField::BOOLEAN;
+								$cell["fieldAllowed"]	= implode( "|", $values );
+							}
+							else							
 							if( count( $options ) == 3 )
 							{
 								$cell["fieldType"]		= DocumentSectionField::TRILEAN;
@@ -400,7 +743,7 @@
 							$cells[$i] 	= $cell;
 							$fieldFound	= true;
 							continue;								
-						}					
+						}		
 					}
 					
 					// update cells
@@ -414,7 +757,7 @@
 		
 		
 		// parse checkboxes
-		protected function matchCheckboxFields( &$document )
+		static protected function matchCheckboxFields( &$document, $tags )
 		{
 			$sections = $document->getSections();
 			
@@ -446,11 +789,12 @@
 						if( DocumentUtils::isStringEmpty( $value ) )
 							continue;
 						
-						if( strtolower( trim( $value ) ) == "{ formtext }" )
+						if( ( !is_bool( $tags["checkbox"] ) && strtolower( $value ) == $tags["checkbox"] ) || 
+							( !is_bool( $tags["textbox"] ) && strtolower( $value ) == $tags["textbox"] ) )
 							continue;
 						
 						// following 2 cells are Yes/No
-						if( ( $i + 2 ) < $no )
+						if( ( $i + 2 ) < $no && is_bool( $tags["checkbox"] ) )
 						{
 							if( !$cells[$i+1]["used"] && !$cells[$i+2]["used"] &&
 								in_array( strtolower( $cells[$i+1]["value"] ), array( "yes", "no" ) ) &&
@@ -472,7 +816,7 @@
 						}
 						
 						// following 4 cells are Yes/empty/No/empty
-						if( ( $i + 4 ) < $no )
+						if( ( $i + 4 ) < $no && is_bool( $tags["checkbox"] ) )
 						{
 							if( !$cells[$i+1]["used"] && !$cells[$i+2]["used"] && !$cells[$i+3]["used"] && !$cells[$i+4]["used"] &&
 								in_array( strtolower( $cells[$i+1]["value"] ), array( "yes", "no" ) ) &&							
@@ -498,7 +842,7 @@
 						}
 						
 						// following 4 cells are empty/Yes/empty/No
-						if( ( $i + 4 ) < $no )
+						if( ( $i + 4 ) < $no && is_bool( $tags["checkbox"] ) )
 						{
 							if( !$cells[$i+1]["used"] && !$cells[$i+2]["used"] && !$cells[$i+3]["used"] && !$cells[$i+4]["used"] &&
 								DocumentUtils::isStringEmpty( $cells[$i+1]["value"] ) &&							
@@ -524,12 +868,12 @@
 						}
 						
 						// following 4 cells are { FORMCHECKBOX }/Yes/{ FORMCHECKBOX }/No
-						if( ( $i + 4 ) < $no )
+						if( ( $i + 4 ) < $no && !is_bool( $tags["checkbox"] ) )
 						{
 							if( !$cells[$i+1]["used"] && !$cells[$i+2]["used"] && !$cells[$i+3]["used"] && !$cells[$i+4]["used"] &&
-								strtolower( trim( $cells[$i+1]["value"] ) ) == "{ formcheckbox }" &&							
+								strtolower( trim( $cells[$i+1]["value"] ) ) == $tags["checkbox"] &&							
 								in_array( strtolower( $cells[$i+2]["value"] ), array( "yes", "no" ) ) &&
-								strtolower( trim( $cells[$i+3]["value"] ) ) == "{ formcheckbox }" &&								
+								strtolower( trim( $cells[$i+3]["value"] ) ) == $tags["checkbox"] &&								
 								in_array( strtolower( $cells[$i+4]["value"] ), array( "yes", "no" ) ) )
 							{						
 								$cells[$i+1]["used"] = 1;
@@ -550,7 +894,7 @@
 						}
 						
 						// following 2 rows are Yes/No
-						if( ( $j + 2 ) < $noRows )
+						if( ( $j + 2 ) < $noRows && is_bool( $tags["checkbox"] ) )
 						{
 							$cells1 = $rows[$j+1]->getCells();
 							$cells2 = $rows[$j+2]->getCells();							
@@ -576,7 +920,7 @@
 						}
 						
 						// following 1 cell is Yes/No
-						if( ( $i + 1 ) < $no )
+						if( ( $i + 1 ) < $no && is_bool( $tags["checkbox"] ) )
 						{
 							$val2 = str_ireplace( "yes", "", $cells[$i+1]["value"] );
 							$val2 = str_ireplace( "no", "", $val2 );		
@@ -605,7 +949,7 @@
 						}
 						
 						// following 1 row is Yes/No
-						if( ( $j + 1 ) < $noRows )
+						if( ( $j + 1 ) < $noRows && is_bool( $tags["checkbox"] ) )
 						{
 							$cells1 = $rows[$j+1]->getCells();
 							if( count( $cells1 ) >= 1 )
@@ -649,7 +993,7 @@
 		
 		
 		// parse questions
-		protected function matchQuestionFields( &$document )
+		static protected function matchQuestionFields( &$document, $tags )
 		{
 			$sections = $document->getSections();
 			
@@ -707,7 +1051,7 @@
 		
 		
 		// match keywords fields
-		protected function matchKeywordFields( &$document )
+		static protected function matchKeywordFields( &$document, $tags )
 		{
 			global $keywords;
 			
@@ -750,7 +1094,7 @@
 						foreach( $keywords as $keyword )
 						{
 							// field found
-							if( $value2 == $keyword["name"] )
+							if( DocumentUtils::isKeywordMatch( $value2, $keyword["name"] ) )
 							{
 								$cell["used"] 		= 1;
 								$cell["fieldFound"]	= 1;
@@ -792,6 +1136,8 @@
 				{
 					$cells = $row->getCells();
 					
+					$prevCell = false;
+					
 					// traverse cells
 					foreach( $cells as $cell )
 					{
@@ -808,8 +1154,17 @@
 						$cell["fieldValue"] = str_replace( "\r", " ", $cell["fieldValue"] );
 						$cell["fieldValue"] = ucfirst( $cell["fieldValue"] );
 						
+						if( $prevCell["fieldValue"] == $cell["fieldValue"] &&
+							$prevCell["fieldType"] == $cell["fieldType"] )
+						{
+							$prevCell = $cell;							
+							continue;
+						}
+						
 						// add field
-						$section->addField( $cell["fieldValue"], $cell["fieldType"], $allowedValues );
+						$section->addField( $cell["fieldValue"], $cell["fieldType"], $allowedValues );						
+						
+						$prevCell = $cell;
 					}
 				}
 			}

@@ -610,6 +610,41 @@
 		
 		
 		
+		//-- WILDCARDS
+		
+		
+		// wildcard get
+		static public function wildcardTableGet()
+		{
+			global $dblink;
+			
+			// query
+			$query = "SELECT A.* FROM `wildcard` A WHERE A.`status`=1 ORDER BY LENGTH(A.`name`) DESC";
+			
+			// query
+			$result = @mysql_query( $query, $dblink );
+			if( false == $result )
+			{
+				ApiLogging::logError( "Failed to run query: " . $query );
+				return false;
+			}
+			
+			$rows = array();
+			while( $row = mysql_fetch_array( $result ) )
+			{
+				$row["name"] = strtolower( $row["name"] );
+				array_push( $rows, $row );
+			}
+			
+			mysql_free_result( $result );
+			
+			return $rows;
+		}	
+		
+		
+		
+		
+		
 		//-- SETTINGS
 		
 		

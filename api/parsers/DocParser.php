@@ -49,13 +49,25 @@
 				if( isset( $word["chapter"]["para"] ) )
 					$chapterList = array( $word["chapter"] );
 				else
-					$chapterList = $word["chapter"];					 
+					$chapterList = $word["chapter"];	
+				
+				$sections 		= array();
+				$curSection		= false;
+				$curRow			= false;
+				$rowID			= 1;
 				 
 				// traverse chapters
 				foreach( $chapterList as $chapter )
 				{
-					$this->processChapter( $chapter );
+					$this->processChapter( $chapter, $curSection, $curRow, $rowID );
 				}
+			
+				// add last section
+				if( !is_bool( $curSection ) )
+					array_push( $sections, $curSection );
+				
+				// build document
+				$this->document->buildFromArray( $sections );					
 			}			
 			
 			// logging
@@ -66,16 +78,11 @@
 		
 		
 		// process chapter
-		protected function processChapter( &$chapter )
+		protected function processChapter( &$chapter, &$curSection, &$curRow, &$rowID )
 		{
 			if( !isset( $chapter["para"] ) )
 				return false;
 
-			$sections 		= array();
-			$curSection		= false;
-			$curRow			= false;
-			$rowID			= 1;
-			
 			// traverse paragraphs
 			foreach( $chapter["para"] as $item )
 			{
@@ -90,7 +97,7 @@
 				}
 				else
 				// table
-				if( isset( $item["informaltable"] ) && isset( $item["informaltable"]["tgroup"] ) && isset( $item["informaltable"]["tgroup"] ) )
+				if( isset( $item["informaltable"] ) )
 				{
 					$this->processChapterTable( $item, $curSection, $curRow, $rowID );
 				}	
@@ -107,13 +114,6 @@
 					$this->processChapterArray( $item, $curSection, $curRow, $rowID );					
 				}					
 			}
-			
-			// add last section
-			if( !is_bool( $curSection ) )
-				array_push( $sections, $curSection );
-			
-			// build document
-			$this->document->buildFromArray( $sections );	
 			
 			return true;
 		}
@@ -170,103 +170,112 @@
 		
 		// process chapter table
 		static protected function processChapterTable( &$item, &$curSection, &$curRow, &$rowID )
-		{
-			if( isset( $item["informaltable"]["tgroup"]["tbody"] ) )						
-				$tgroupList = array( $item["informaltable"]["tgroup"] );
+		{			
+			if( isset( $item["informaltable"]["tgroup"] ) )
+				$tableList = array( $item["informaltable"] );
 			else
-				$tgroupList = $item["informaltable"]["tgroup"];
+				$tableList = $item["informaltable"];			
 			
-			// traverse tgroup list
-			foreach( $tgroupList as $tgroup )
-			{
-				if( !isset( $tgroup["tbody"] ) )
-					continue;
-				
-				$colWidths = array();
-				
-				// get column spec
-				if( isset( $tgroup["colspec"] ) )
-				{
-					if( isset( $tgroup["colspec"]["@attributes"] ) )						
-						$colList = array( $tgroup["colspec"] );
-					else
-						$colList = $tgroup["colspec"];
-					
-					foreach( $colList as $col )
-					{
-						if( !isset( $col["@attributes"] ) )
-							continue;
-						
-						$colWidth = false;
-						if( isset( $col["@attributes"]["colwidth"] ) )
-							$colWidth = $col["@attributes"]["colwidth"];
-						
-						array_push( $colWidths, $colWidth );
-					}
-				}
-				
-				if( isset( $tgroup["tbody"]["row"]["entry"] ) )
-					$rows = array( $tgroup["tbody"]["row"] );
+			// traverse table list
+			foreach( $tableList as $table )
+			{			
+				if( isset( $table["tgroup"]["tbody"] ) )						
+					$tgroupList = array( $table["tgroup"] );
 				else
-					$rows = $tgroup["tbody"]["row"];
+					$tgroupList = $table["tgroup"];
 				
-				// traverse rows
-				foreach( $rows as $row )
+				// traverse tgroup list
+				foreach( $tgroupList as $tgroup )
 				{
-					// create row			
-					$curRow = array();
-			
-					if( is_string( $row["entry"] ) )
-						$entries = array( $row["entry"] );
-					else
-						$entries = $row;
+					if( !isset( $tgroup["tbody"] ) )
+						continue;
 					
-					$colID = 1;
-
-					// traverse entries
-					foreach( $entries as $entry )
+					$colWidths = array();
+					
+					// get column spec
+					if( isset( $tgroup["colspec"] ) )
 					{
-						if( is_string( $entry ) )
-							$entries2 = array( $entry );
+						if( isset( $tgroup["colspec"]["@attributes"] ) )						
+							$colList = array( $tgroup["colspec"] );
 						else
-							$entries2 = $entry;
+							$colList = $tgroup["colspec"];
 						
-						foreach( $entries2 as $entry2 )
+						foreach( $colList as $col )
 						{
-							// cell width
+							if( !isset( $col["@attributes"] ) )
+								continue;
+							
 							$colWidth = false;
-							if( $colID  <= count( $colWidths ) )
-								$colWidth = $colWidths[ $colID - 1 ];
+							if( isset( $col["@attributes"]["colwidth"] ) )
+								$colWidth = $col["@attributes"]["colwidth"];
 							
-							$entryVal = "";
-							
-							if( is_string( $entry2 ) )
-							{										
-								$entryVal = $entry2;
-							}
-							else
-							if( is_array( $entry2 ) )
-							{
-								foreach( $entry2 as $entry2Item )
-								{
-									if( is_string( $entry2Item ) )
-										$entryVal .= $entry2Item;							
-								}										
-							}						
-				
-							// normalize text
-							DocumentUtils::normalizeText( $entryVal );	
-				
-							// add row cell
-							array_push( $curRow, array( $colID, $entryVal, $colWidth ) );
-							$colID++;									
+							array_push( $colWidths, $colWidth );
 						}
 					}
 					
-					// add row
-					$curSection["rows"][$rowID] = $curRow;
-					$curRow = false;
-					$rowID++;							
+					if( isset( $tgroup["tbody"]["row"]["entry"] ) )
+						$rows = array( $tgroup["tbody"]["row"] );
+					else
+						$rows = $tgroup["tbody"]["row"];
+					
+					// traverse rows
+					foreach( $rows as $row )
+					{
+						// create row			
+						$curRow = array();
+				
+						if( is_string( $row["entry"] ) )
+							$entries = array( $row["entry"] );
+						else
+							$entries = $row;
+						
+						$colID = 1;
+
+						// traverse entries
+						foreach( $entries as $entry )
+						{
+							if( is_string( $entry ) )
+								$entries2 = array( $entry );
+							else
+								$entries2 = $entry;
+							
+							foreach( $entries2 as $entry2 )
+							{
+								// cell width
+								$colWidth = false;
+								if( $colID  <= count( $colWidths ) )
+									$colWidth = $colWidths[ $colID - 1 ];
+								
+								$entryVal = "";
+								
+								if( is_string( $entry2 ) )
+								{										
+									$entryVal = $entry2;
+								}
+								else
+								if( is_array( $entry2 ) )
+								{
+									foreach( $entry2 as $entry2Item )
+									{
+										if( is_string( $entry2Item ) )
+											$entryVal .= $entry2Item;							
+									}										
+								}
+					
+								// normalize text
+								DocumentUtils::normalizeText( $entryVal );	
+					
+								// add row cell
+								array_push( $curRow, array( $colID, $entryVal, $colWidth ) );
+								$colID++;									
+							}
+						}
+						
+						// add row
+						$curSection["rows"][$rowID] = $curRow;
+						$curRow = false;
+						$rowID++;							
+					}
 				}
 			}
 			

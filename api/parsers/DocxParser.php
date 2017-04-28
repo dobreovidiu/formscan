@@ -44,18 +44,30 @@
 			
 			
 			// GET CONTENT
-			$sections = $word->getSections();			
-			if( !$sections )
+			$wordSections = $word->getSections();			
+			if( !$wordSections )
 				return false;
 			
+			$sections 		= array();
+			$curSection		= false;
+			$curRow			= false;
+			$rowID			= 1;			
+			
 			// traverse sections
-			foreach( $sections as $section )
+			foreach( $wordSections as $wordSection )
 			{
 				// elements
-				$elements = $section->getElements();
+				$elements = $wordSection->getElements();
 				if( $elements )
-					$this->processElements( $elements );
+					$this->processElements( $elements, $curSection, $curRow, $rowID );
 			}
+			
+			// add last section
+			if( !is_bool( $curSection ) )
+				array_push( $sections, $curSection );
+			
+			// build document
+			$this->document->buildFromArray( $sections );	
 			
 			// logging
 			DocumentUtils::logFile( "docx-result", $this->document->outputRows() );
@@ -65,16 +77,15 @@
 		
 		
 		// process elements
-		protected function processElements( &$elements )
+		protected function processElements( &$elements, &$curSection, &$curRow, &$rowID )
 		{
-			$sections 		= array();
-			$curSection		= false;
-			$curRow			= false;
-			$rowID			= 1;
-			
 			// traverse elements
 			foreach( $elements as $element )
 			{
+				// create section
+				if( is_bool( $curSection ) )
+					$curSection = array( "rows" => array() );
+				
 				// Text
 				if( get_class( $element ) == "PhpOffice\PhpWord\Element\Text" )
 				{
@@ -147,13 +158,6 @@
 					echo "Elements: Unprocessed: " . get_class( $element ) . "\n";
 				}					
 			}
-			
-			// add last section
-			if( !is_bool( $curSection ) )
-				array_push( $sections, $curSection );
-			
-			// build document
-			$this->document->buildFromArray( $sections );	
 			
 			return true;
 		}
@@ -385,6 +389,9 @@
 							if( is_array( $text ) )
 								$text = $this->arrayToString( $text );								
 							
+							if( strlen( $cellContent ) > 0 )
+								$cellContent .= " ";
+							
 							$cellContent .= $text;
 						}		
 						else					
@@ -395,6 +402,9 @@
 							if( is_array( $text ) )
 								$text = $this->arrayToString( $text );	
 					
+							if( strlen( $cellContent ) > 0 )
+								$cellContent .= " ";
+							
 							$cellContent .= $text;
 						}		
 						else
@@ -407,7 +417,7 @@
 							$text = $this->processElementRunTextContent( $element->getElements() );
 							if( strlen( $text ) > 0 )
 							{
-								if( $cellContent != "" )
+								if( strlen( $cellContent ) > 0 )
 									$cellContent .= "\n";
 									
 								$cellContent .= $text;

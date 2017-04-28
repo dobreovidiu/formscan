@@ -91,10 +91,16 @@
 		static protected function initialize()
 		{			
 			global $keywords;
+			global $wildcards;
 			
 			// keywords
 			$keywords = ApiDb::keywordTableGet();
 			if( is_bool( $keywords ) )
+				return false;
+			
+			// wildcards
+			$wildcards = ApiDb::wildcardTableGet();
+			if( is_bool( $wildcards ) )
 				return false;
 			
 			return true;

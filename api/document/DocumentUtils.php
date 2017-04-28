@@ -139,8 +139,8 @@
 		}
 		
 		
-		// whether header element text
-		static public function isHeaderElementText( $text )
+		// whether section header text
+		static public function isSectionHeaderText( $text )
 		{
 			$text = trim( $text );
 			
@@ -161,6 +161,157 @@
 				$result = $matches[0][0];
 				$pos = stripos( $text, $result );
 				if( !is_bool( $pos ) && ( $pos == 0 ) )
+					return true;
+			}
+			
+			return false;
+		}
+		
+		
+		// whether header element text
+		static public function isHeaderElementText( $text )
+		{
+			$text = trim( $text );
+			
+			// 4.3.2.1
+			@preg_match( '/([0-9]+)([\. ]+)([0-9]+)([\. ]+)([0-9]+)([\. ]+)([0-9]+)/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// 4.3.2
+			@preg_match( '/([0-9]+)([\. ]+)([0-9]+)([\. ]+)([0-9]+)/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// 4.3
+			@preg_match( '/([0-9]+)([\. ]+)([0-9]+)/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// 4.
+			@preg_match( '/([0-9]+)([\. ]+)([ ])/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// a.
+			@preg_match( '/([a-z]{1,1})([\. ]+)([ ])/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// A.
+			@preg_match( '/([A-Z]{1,1})([\. ]+)([ ])/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// (a)
+			@preg_match( '/([\(]+)([a-z]{1,1})([\)]+)/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// (A)
+			@preg_match( '/([\(]+)([A-Z]{1,1})([\)]+)/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// (1)
+			@preg_match( '/([\(]+)([0-9]{1,1})([\)]+)/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// SECTION A
+			@preg_match( '/SECTION ([A-Z]{1,1})([ ])/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// roman - (i)
+			@preg_match( '/([\(]+)(ix|iv|v?i{0,3})([\)]+)([ ])/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			@preg_match( '/([\(]+)(IX|IV|V?I{0,3})([\)]+)([ ])/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// roman - i.
+			@preg_match( '/(ix|iv|v?i{0,3})([\. ]+)([ ])/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			@preg_match( '/(IX|IV|V?I{0,3})([\. ]+)([ ])/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// Annex A
+			@preg_match( '/Annex ([A-Z0-9]{1,1})([\:\- ]+)/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
+					return true;
+			}
+			
+			// 1)
+			@preg_match( '/([1-9]{1,1})([\)]+)/', $text, $matches, PREG_OFFSET_CAPTURE );
+			if( $matches && count( $matches ) > 0 && ( count( $matches[0] ) == 2 ) )
+			{
+				$result = $matches[0][0];
+				if( strtolower( $result ) == strtolower( $text ) )
 					return true;
 			}
 			
@@ -317,6 +468,24 @@
 			foreach( $specialChars as $char )
 				$text = str_ireplace( $char[0], $char[1], $text );
 		}
+		
+		
+		// verify if keyword match
+		static public function isKeywordMatch( $val1, $val2 )
+		{
+			global $wildcards;
+			
+			if( $val1 == $val2 )
+				return true;
+			
+			foreach( $wildcards as $wildcard )
+			{
+				if( trim( str_replace( $wildcard["name"], "", $val1 ) ) == $val2 )
+					return true;
+			}
+			
+			return false;
+		}		
 			
 		
 		// log analysis status		
