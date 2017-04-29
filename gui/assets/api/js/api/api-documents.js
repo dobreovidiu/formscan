@@ -137,12 +137,14 @@
 				try{
 					response = JSON.parse(result);
 				}catch(e){		
+					document.getElementById("automationLogs").innerHTML = "Form automation not running.";			
 					document.getElementById("processBut").disabled = false;				
 					return;
 				}
 				
 				if( response.success == "false" )
 				{						
+					document.getElementById("automationLogs").innerHTML = "Form automation not running.";			
 					document.getElementById("processBut").disabled = false;			
 					showStatus( "Oops", response.exception );
 					return;
