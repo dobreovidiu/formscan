@@ -1,6 +1,0 @@
-<?php
-
-	// Page utility functions.
-	
-
-?>
