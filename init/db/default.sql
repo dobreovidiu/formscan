@@ -122,4 +122,4 @@ insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Notes", 2,
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Details", 2, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Place", 1, 1, '2016-01-01');
 insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Designation", 1, 1, '2016-01-01');
-
+insert into `keyword` (`name`, `type`, `status`, `dateAdded`) VALUES("Time", 8, 1, '2016-01-01');

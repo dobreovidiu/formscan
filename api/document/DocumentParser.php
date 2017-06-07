@@ -1031,21 +1031,38 @@
 						$value = trim( $cell["value"] );
 						
 						// question
-						if( substr( $value, -1 ) != "?" )
-							continue;
-						
-						// single question cell
-						if( ( $i + 1 ) >= $no )
+						if( substr( $value, -1 ) == "?" )
 						{
-							$cell["used"] 		= 1;
-							$cell["fieldFound"]	= 1;
-							$cell["fieldValue"]	= $cell["value"];
-							$cell["fieldType"]	= DocumentSectionField::TEXTBOX;
-							
-							$cells[$i] 	= $cell;
-							$fieldFound	= true;
-							continue;								
+							// single question cell
+							if( ( $i + 1 ) >= $no )
+							{
+								$cell["used"] 		= 1;
+								$cell["fieldFound"]	= 1;
+								$cell["fieldValue"]	= $cell["value"];
+								$cell["fieldType"]	= DocumentSectionField::TEXTBOX;
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;								
+							}
 						}
+						else
+						// :
+						if( substr( $value, -1 ) == ":" )
+						{
+							// single cell
+							if( ( $i + 1 ) >= $no )
+							{
+								$cell["used"] 		= 1;
+								$cell["fieldFound"]	= 1;
+								$cell["fieldValue"]	= $cell["value"];
+								$cell["fieldType"]	= DocumentSectionField::INPUTTEXT;
+								
+								$cells[$i] 	= $cell;
+								$fieldFound	= true;
+								continue;								
+							}
+						}					
 					}
 					
 					// update cells
